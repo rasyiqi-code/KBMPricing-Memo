@@ -55,3 +55,4 @@ Hasil file installer dan portable berada di folder `dist-electron/`.
 
 ## 📄 Lisensi
 Hak Cipta © 2026 Penerbit KBM Indonesia.
+
