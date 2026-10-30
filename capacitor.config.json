@@ -1,0 +1,9 @@
+{
+  "appId": "com.penerbitkbm.calculator",
+  "appName": "KBM Calculator",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

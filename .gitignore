@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production & Build Artifacts
+dist/
+dist-electron/
+dist-ssr/
+build/
+*.local
+
+# Binaries & Large Files (>100MB rejected by GitHub)
+*.exe
+*.apk
+*.aab
+*.zip
+*.tar.gz
+*.7z
+
+# Capacitor & Android Gradle Cache
+android/app/build/
+android/build/
+android/.gradle/
+android/captures/
+android/local.properties
+.gradle/
+
+# Private Certificate Keys & Keystores
+certs/*.key
+certs/*.pem
+certs/*.pfx
+certs/*.keystore
+
+# Editor & System Files
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.sw?
+.emocis/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
