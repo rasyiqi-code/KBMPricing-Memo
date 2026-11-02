@@ -1,26 +1,49 @@
 <script setup>
+import { computed } from 'vue'
 import {
   Calculator,
   Sparkles,
   Gift,
   Minus,
-  Plus
+  Plus,
+  Award
 } from 'lucide-vue-next'
-import { PAGE_TIERS, formatRupiah } from '../data/pricingData.js'
+import {
+  PAGE_TIERS,
+  PAPER_SIZES,
+  SPOT_UV_FEE,
+  EXTRA_HAKI_PERSON_FEE,
+  formatRupiah,
+  formatNumberDots,
+  parseNumberFromDots
+} from '../data/pricingData.js'
 import { usePricingStore } from '../composables/usePricingStore.js'
 import SummaryInvoice from './SummaryInvoice.vue'
 
 const {
-  customPaperSize,
+  customPaperSizeId,
+  customPaperW,
+  customPaperH,
   customPages,
   customQty,
   customAddHaki,
+  customHakiAuthors,
   customHakiFee,
+  customUseHardCover,
+  customUseSpotUv,
   customDiscountType,
   customDiscountValue,
-  setPaperSize,
   customCalculation
 } = usePricingStore()
+
+const formattedDiscount = computed({
+  get() {
+    return customDiscountValue.value ? formatNumberDots(customDiscountValue.value) : ''
+  },
+  set(val) {
+    customDiscountValue.value = parseNumberFromDots(val)
+  }
+})
 </script>
 
 <template>
@@ -34,25 +57,57 @@ const {
     </div>
 
     <form class="form-stack" @submit.prevent>
+      <!-- Pilihan Ukuran Kertas Pasti -->
       <div class="field-group">
-        <label class="field-label">Pilih Ukuran Kertas Buku</label>
-        <div class="segmented">
+        <label class="field-label">
+          <span>Pilih Ukuran Kertas Buku</span>
+          <span class="field-hint">{{ customCalculation.paperLabel }}</span>
+        </label>
+        <div class="chip-row">
           <button
+            v-for="paper in PAPER_SIZES"
+            :key="paper.id"
             type="button"
-            class="segment-btn"
-            :class="{ active: customPaperSize === 'A5' }"
-            @click="setPaperSize('A5')"
+            class="chip-btn"
+            :class="{ active: customPaperSizeId === paper.id }"
+            @click="customPaperSizeId = paper.id"
           >
-            📐 A5 / Unesco
+            {{ paper.name }}
           </button>
-          <button
-            type="button"
-            class="segment-btn"
-            :class="{ active: customPaperSize === 'A4' }"
-            @click="setPaperSize('A4')"
-          >
-            📄 Ukuran A4
-          </button>
+        </div>
+
+        <!-- Custom Width x Height Input if CUSTOM -->
+        <div v-if="customPaperSizeId === 'CUSTOM'" class="custom-dim-box">
+          <div class="dim-input-col">
+            <label class="dim-label">Lebar (cm)</label>
+            <input
+              v-model.number="customPaperW"
+              type="number"
+              step="0.5"
+              min="10"
+              max="30"
+              class="input-control"
+              placeholder="14"
+            />
+          </div>
+          <span class="dim-multiply">×</span>
+          <div class="dim-input-col">
+            <label class="dim-label">Tinggi (cm)</label>
+            <input
+              v-model.number="customPaperH"
+              type="number"
+              step="0.5"
+              min="10"
+              max="40"
+              class="input-control"
+              placeholder="20"
+            />
+          </div>
+          <div class="dim-info-col">
+            <span class="dim-result-tag">
+              Kategori: {{ customCalculation.paperCategory === 'A4' ? 'B5 / A4' : 'A5 / Unesco' }}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -61,7 +116,7 @@ const {
       <!-- Stepper Jumlah Halaman -->
       <div class="field-group">
         <label for="custom-pages" class="field-label">
-          <span>Jumlah Halaman ({{ customPaperSize }})</span>
+          <span>Jumlah Halaman ({{ customCalculation.paperCategory }})</span>
           <span class="field-hint">{{ customCalculation.pageTier.label }}</span>
         </label>
         <div class="stepper-unified">
@@ -97,10 +152,10 @@ const {
             :key="tier.id"
             type="button"
             class="chip-btn"
-            :class="{ active: customPages === (customPaperSize === 'A4' ? tier.a4 : tier.a5) }"
-            @click="customPages = customPaperSize === 'A4' ? tier.a4 : tier.a5"
+            :class="{ active: customPages === (customCalculation.paperCategory === 'A4' ? tier.a4 : tier.a5) }"
+            @click="customPages = customCalculation.paperCategory === 'A4' ? tier.a4 : tier.a5"
           >
-            {{ customPaperSize === 'A4' ? tier.a4 : tier.a5 }} Hal
+            {{ customCalculation.paperCategory === 'A4' ? tier.a4 : tier.a5 }} Hal
           </button>
         </div>
       </div>
@@ -172,26 +227,116 @@ const {
         </button>
       </div>
 
-      <!-- Opsi HAKI -->
-      <div class="toggle-row">
-        <label for="custom-haki-check" class="toggle-label">
-          <input
-            id="custom-haki-check"
-            v-model="customAddHaki"
-            name="custom_add_haki"
-            type="checkbox"
-            class="toggle-checkbox"
-          />
-          <span>Sertakan Pengurusan HAKI</span>
+      <div class="form-divider"></div>
+
+      <!-- FINISHING HARD COVER & SPOT UV -->
+      <div class="field-group">
+        <label class="field-label">
+          <span>Finishing & Sampul Buku</span>
         </label>
-        <span class="toggle-price">+{{ formatRupiah(customHakiFee) }}</span>
+        
+        <!-- Checkbox Hard Cover -->
+        <div class="toggle-row">
+          <label for="custom-hardcover-check" class="toggle-label">
+            <input
+              id="custom-hardcover-check"
+              v-model="customUseHardCover"
+              type="checkbox"
+              class="toggle-checkbox"
+            />
+            <span>
+              <strong>Hard Cover Mewah</strong>
+              <small style="display: block; color: var(--text-muted); font-size: 0.78rem">
+                {{ customQty }} eks @ {{ formatRupiah(customCalculation.hardCoverRate) }}/eks
+              </small>
+            </span>
+          </label>
+          <span class="toggle-price">
+            {{ customUseHardCover ? `+${formatRupiah(customCalculation.hardCoverCost)}` : `@ ${formatRupiah(customCalculation.hardCoverRate)}` }}
+          </span>
+        </div>
+
+        <!-- Checkbox Spot UV -->
+        <div class="toggle-row" style="margin-block-start: 8px">
+          <label for="custom-spotuv-check" class="toggle-label">
+            <input
+              id="custom-spotuv-check"
+              v-model="customUseSpotUv"
+              type="checkbox"
+              class="toggle-checkbox"
+            />
+            <span>
+              <strong>Finishing Spot UV</strong>
+              <small style="display: block; color: var(--text-muted); font-size: 0.78rem">Efek timbul mengkilap elegan pada cover</small>
+            </span>
+          </label>
+          <span class="toggle-price">+{{ formatRupiah(SPOT_UV_FEE) }}</span>
+        </div>
       </div>
 
       <div class="form-divider"></div>
 
-      <!-- Potongan Diskon -->
+      <!-- OPSI HAKI -->
       <div class="field-group">
-        <label for="custom-discount" class="field-label">Potongan Diskon Khusus</label>
+        <label class="field-label">
+          <span>Sertifikat HAKI Kemenkumham</span>
+        </label>
+        <div class="toggle-row">
+          <label for="custom-haki-check" class="toggle-label">
+            <input
+              id="custom-haki-check"
+              v-model="customAddHaki"
+              name="custom_add_haki"
+              type="checkbox"
+              class="toggle-checkbox"
+            />
+            <span>Sertakan Pengurusan HAKI</span>
+          </label>
+          <span class="toggle-price">+{{ formatRupiah(customHakiFee) }}</span>
+        </div>
+
+        <!-- Stepper Jumlah Nama Penulis HAKI jika HAKI aktif -->
+        <div v-if="customAddHaki" class="author-haki-box" style="margin-block-start: 8px">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-block-end: 6px">
+            <span style="font-size: 0.85rem; font-weight: 500">Jumlah Nama Penulis di Sertifikat HAKI:</span>
+            <span v-if="customHakiAuthors > 1" class="field-hint" style="color: var(--kbm-red); font-weight: 600">
+              +{{ formatRupiah((customHakiAuthors - 1) * EXTRA_HAKI_PERSON_FEE) }} (+{{ customHakiAuthors - 1 }} nama @ 25rb)
+            </span>
+          </div>
+          <div class="stepper-unified mini">
+            <button
+              type="button"
+              class="stepper-btn"
+              aria-label="Kurangi nama penulis"
+              @click="customHakiAuthors = Math.max(1, (Number(customHakiAuthors) || 1) - 1)"
+            >
+              <Minus :size="14" />
+            </button>
+            <input
+              v-model.number="customHakiAuthors"
+              type="text"
+              inputmode="numeric"
+              class="stepper-input-bare"
+            />
+            <button
+              type="button"
+              class="stepper-btn"
+              aria-label="Tambah nama penulis"
+              @click="customHakiAuthors = (Number(customHakiAuthors) || 1) + 1"
+            >
+              <Plus :size="14" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-divider"></div>
+
+      <!-- POTONGAN KHUSUS ANDA -->
+      <div class="field-group">
+        <label for="custom-discount" class="field-label">
+          <span>Potongan Khusus Anda</span>
+        </label>
         <div class="segmented">
           <button
             type="button"
@@ -211,15 +356,38 @@ const {
           </button>
         </div>
         <input
+          v-if="customDiscountType === 'nominal'"
           id="custom-discount"
-          v-model.number="customDiscountValue"
-          name="custom_discount"
+          v-model="formattedDiscount"
           type="text"
           inputmode="numeric"
           enterkeyhint="done"
           class="input-control"
-          placeholder="0"
+          placeholder="Contoh: 50.000"
         />
+        <input
+          v-else
+          id="custom-discount-pct"
+          v-model.number="customDiscountValue"
+          type="number"
+          min="0"
+          max="100"
+          enterkeyhint="done"
+          class="input-control"
+          placeholder="Contoh: 10"
+        />
+        <div v-if="customDiscountType === 'nominal'" class="chip-row">
+          <button
+            v-for="d in [0, 50000, 100000, 150000, 250000]"
+            :key="d"
+            type="button"
+            class="chip-btn"
+            :class="{ active: customDiscountValue === d }"
+            @click="customDiscountValue = d"
+          >
+            {{ d === 0 ? 'Tanpa Diskon' : formatRupiah(d) }}
+          </button>
+        </div>
       </div>
     </form>
   </section>

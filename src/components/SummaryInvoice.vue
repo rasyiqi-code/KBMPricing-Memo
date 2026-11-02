@@ -19,7 +19,7 @@ const {
       <div class="summary-header">
         <span class="badge-pill badge-gold">{{ pkgCalculation.pkg.name }}</span>
         <span class="summary-meta">
-          Diterima: <strong>{{ pkgCalculation.totalCopiesReceived }} Eks</strong>
+          Ukuran: <strong>{{ pkgCalculation.paperLabel }}</strong> • Diterima: <strong>{{ pkgCalculation.totalCopiesReceived }} Eks</strong>
         </span>
       </div>
 
@@ -36,7 +36,9 @@ const {
       </div>
 
       <div v-if="pkgCalculation.totalExtraPageCost > 0" class="summary-row">
-        <span class="summary-row-label">Penyesuaian {{ pkgCalculation.actualPages }} Hal</span>
+        <span class="summary-row-label">
+          Penyesuaian {{ pkgCalculation.actualPages }} Hal (Lebih {{ pkgCalculation.extraPages }} Hal)
+        </span>
         <span class="summary-row-val">+{{ formatRupiah(pkgCalculation.totalExtraPageCost) }}</span>
       </div>
 
@@ -47,13 +49,27 @@ const {
         <span class="summary-row-val">+{{ formatRupiah(pkgCalculation.totalExtraCopiesCost) }}</span>
       </div>
 
+      <div v-if="pkgCalculation.useHardCover" class="summary-row">
+        <span class="summary-row-label">
+          Hard Cover Mewah ({{ pkgCalculation.totalCopiesReceived }} Eks @ {{ formatRupiah(pkgCalculation.hardCoverRate) }})
+        </span>
+        <span class="summary-row-val">+{{ formatRupiah(pkgCalculation.hardCoverCost) }}</span>
+      </div>
+
+      <div v-if="pkgCalculation.useSpotUv" class="summary-row">
+        <span class="summary-row-label">Finishing Spot UV</span>
+        <span class="summary-row-val">+{{ formatRupiah(pkgCalculation.spotUvCost) }}</span>
+      </div>
+
       <div v-if="pkgCalculation.hakiCost > 0" class="summary-row">
-        <span class="summary-row-label">Sertifikat HAKI Kemenkumham</span>
+        <span class="summary-row-label">
+          Sertifikat HAKI Kemenkumham ({{ pkgCalculation.authorsCount }} Penulis)
+        </span>
         <span class="summary-row-val">+{{ formatRupiah(pkgCalculation.hakiCost) }}</span>
       </div>
 
       <div v-if="pkgCalculation.discountAmount > 0" class="summary-row discount">
-        <span class="summary-row-label">Potongan Diskon Khusus</span>
+        <span class="summary-row-label">Potongan Khusus Anda</span>
         <span class="summary-row-val">-{{ formatRupiah(pkgCalculation.discountAmount) }}</span>
       </div>
 
@@ -72,7 +88,9 @@ const {
     <template v-else-if="activeTab === 'custom'">
       <div class="summary-header">
         <span class="badge-pill badge-gold">{{ customCalculation.qtyTier.label }}</span>
-        <span class="summary-meta">{{ customCalculation.pageTier.label }}</span>
+        <span class="summary-meta">
+          {{ customCalculation.paperLabel }} • {{ customCalculation.pageTier.label }}
+        </span>
       </div>
 
       <div class="summary-row">
@@ -93,13 +111,27 @@ const {
         <span class="summary-row-val">{{ formatRupiah(customCalculation.printTotal) }}</span>
       </div>
 
+      <div v-if="customCalculation.useHardCover" class="summary-row">
+        <span class="summary-row-label">
+          Hard Cover Mewah ({{ customCalculation.qty }} Eks @ {{ formatRupiah(customCalculation.hardCoverRate) }})
+        </span>
+        <span class="summary-row-val">+{{ formatRupiah(customCalculation.hardCoverCost) }}</span>
+      </div>
+
+      <div v-if="customCalculation.useSpotUv" class="summary-row">
+        <span class="summary-row-label">Finishing Spot UV</span>
+        <span class="summary-row-val">+{{ formatRupiah(customCalculation.spotUvCost) }}</span>
+      </div>
+
       <div v-if="customCalculation.hakiCost > 0" class="summary-row">
-        <span class="summary-row-label">Biaya HAKI Kemenkumham</span>
+        <span class="summary-row-label">
+          Biaya HAKI Kemenkumham ({{ customCalculation.authorsCount }} Penulis)
+        </span>
         <span class="summary-row-val">+{{ formatRupiah(customCalculation.hakiCost) }}</span>
       </div>
 
       <div v-if="customCalculation.discountAmount > 0" class="summary-row discount">
-        <span class="summary-row-label">Potongan Diskon Khusus</span>
+        <span class="summary-row-label">Potongan Khusus Anda</span>
         <span class="summary-row-val">-{{ formatRupiah(customCalculation.discountAmount) }}</span>
       </div>
 
@@ -152,7 +184,7 @@ const {
       </div>
 
       <div v-if="konversiCalculation.discountAmount > 0" class="summary-row discount">
-        <span class="summary-row-label">Potongan Diskon Khusus</span>
+        <span class="summary-row-label">Potongan Khusus Anda</span>
         <span class="summary-row-val">-{{ formatRupiah(konversiCalculation.discountAmount) }}</span>
       </div>
 
@@ -174,15 +206,17 @@ const {
         <span class="summary-row-val">{{ formatRupiah(ebookCalculation.pkg.price) }}</span>
       </div>
       <div v-if="ebookCalculation.extraPagesCost > 0" class="summary-row">
-        <span class="summary-row-label">Tambahan Halaman (+{{ ebookCalculation.extraPages }} Hal)</span>
+        <span class="summary-row-label">Layout Kelebihan Halaman (+{{ ebookCalculation.extraPages }} Hal @ 750)</span>
         <span class="summary-row-val">+{{ formatRupiah(ebookCalculation.extraPagesCost) }}</span>
       </div>
       <div v-if="ebookCalculation.hakiCost > 0" class="summary-row">
-        <span class="summary-row-label">Biaya Pengajuan HAKI</span>
+        <span class="summary-row-label">
+          Biaya Pengajuan HAKI ({{ ebookCalculation.authorsCount }} Penulis)
+        </span>
         <span class="summary-row-val">+{{ formatRupiah(ebookCalculation.hakiCost) }}</span>
       </div>
       <div v-if="ebookCalculation.discountAmount > 0" class="summary-row discount">
-        <span class="summary-row-label">Potongan Diskon Khusus</span>
+        <span class="summary-row-label">Potongan Khusus Anda</span>
         <span class="summary-row-val">-{{ formatRupiah(ebookCalculation.discountAmount) }}</span>
       </div>
 
@@ -193,4 +227,3 @@ const {
     </template>
   </section>
 </template>
-

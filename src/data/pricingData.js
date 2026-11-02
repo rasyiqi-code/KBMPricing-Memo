@@ -92,6 +92,46 @@ export const TABLE_NOTES = [
   'Ada Kuantitas Ada FASILITAS.'
 ]
 
+// ==================== DEFINITIVE PAPER SIZES ====================
+export const PAPER_SIZES = [
+  { id: 'A5', label: 'A5 (14,8 × 21 cm)', shortLabel: 'A5', category: 'A5', maxWidth: 15.0, maxHeight: 21.5 },
+  { id: 'UNESCO', label: 'Unesco (15,5 × 23 cm)', shortLabel: 'Unesco', category: 'A5', maxWidth: 15.5, maxHeight: 23.0 },
+  { id: 'B5', label: 'B5 (17,5 × 25 cm)', shortLabel: 'B5', category: 'A4', maxWidth: 18.0, maxHeight: 25.5 },
+  { id: 'A4', label: 'A4 (21 × 29,7 cm)', shortLabel: 'A4', category: 'A4', maxWidth: 21.5, maxHeight: 30.0 },
+  { id: 'CUSTOM', label: 'Ukuran Custom', shortLabel: 'Custom', category: 'custom', maxWidth: 99, maxHeight: 99 }
+]
+
+// ==================== FINISHING & ADD-ON RATES ====================
+export const SPOT_UV_FEE = 600000
+export const EXTRA_HAKI_PERSON_FEE = 25000
+export const EBOOK_EXTRA_PAGE_RATE = 750
+
+export function getHardCoverRate(qty) {
+  const safeQty = Math.max(1, Number(qty) || 1)
+  if (safeQty <= 25) {
+    return 27000
+  } else if (safeQty <= 100) {
+    return 25000
+  } else {
+    return 17000
+  }
+}
+
+export function resolvePaperCategory(paperSizeId, customW = 14, customH = 20) {
+  if (paperSizeId === 'A5' || paperSizeId === 'UNESCO') return 'A5'
+  if (paperSizeId === 'B5' || paperSizeId === 'A4') return 'A4'
+  if (paperSizeId === 'CUSTOM') {
+    const w = Number(customW) || 14
+    const h = Number(customH) || 20
+    // Opsi A: ukuran <= 15.5 x 23 cm ikut A5/Unesco, diatasnya ikut B5/A4
+    if (w <= 15.5 && h <= 23.0) {
+      return 'A5'
+    }
+    return 'A4'
+  }
+  return 'A5'
+}
+
 export const BOOK_PACKAGES = [
   {
     id: 'nusantara_new',
@@ -483,20 +523,13 @@ export const CONVERSION_EXCLUDED = [
 
 export const EBOOK_PACKAGES = [
   {
-    id: 'ebook_sastra',
-    name: 'Paket E-Book Sastra',
-    category: 'Sastra (Novel, Puisi, Cerpen, Antologi)',
-    price: 250000,
-    size: 'A5 / Unesco',
-    maxPages: 200
-  },
-  {
-    id: 'ebook_non_sastra',
-    name: 'Paket E-Book Non Sastra',
-    category: 'Non Sastra (Pendidikan, Referensi, Monograf, Umum)',
+    id: 'ebook_resmi',
+    name: 'Paket Penerbitan E-Book',
+    category: 'E-Book Ber-ISBN (Sastra & Non Sastra)',
     price: 400000,
     size: 'A5 / Unesco',
-    maxPages: 200
+    maxPages: 200,
+    extraPageRate: 750
   }
 ]
 
@@ -566,4 +599,18 @@ export function getPageTier(pages, paperSize = 'A5') {
 export function formatRupiah(amount) {
   const num = Math.round(Number(amount) || 0)
   return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
+
+export function formatNumberDots(val) {
+  if (val === null || val === undefined || val === '') return ''
+  const clean = String(val).replace(/\D/g, '')
+  if (!clean) return '0'
+  return clean.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
+
+export function parseNumberFromDots(val) {
+  if (typeof val === 'number') return val
+  if (!val) return 0
+  const clean = String(val).replace(/\D/g, '')
+  return Number(clean) || 0
 }

@@ -9,9 +9,17 @@ import {
   EBOOK_FACILITIES,
   PAGE_TIERS,
   QUANTITY_TIERS,
+  PAPER_SIZES,
+  SPOT_UV_FEE,
+  EXTRA_HAKI_PERSON_FEE,
+  EBOOK_EXTRA_PAGE_RATE,
   getQuantityTier,
   getPageTier,
-  formatRupiah
+  getHardCoverRate,
+  resolvePaperCategory,
+  formatRupiah,
+  formatNumberDots,
+  parseNumberFromDots
 } from '../data/pricingData.js'
 
 // Singleton reactive state so all modular components share the same calculator state
@@ -19,6 +27,7 @@ const activeTab = ref('paket')
 
 // Customer & Marketing Info
 const showCustomerForm = ref(false)
+const customerSalutation = ref('Bapak') // 'Bapak' | 'Ibu'
 const customerName = ref('')
 const customerPhone = ref('')
 const bookTitle = ref('')
@@ -35,13 +44,19 @@ watch(marketingName, (val) => {
 
 // ==================== 1. STATE PAKET BUKU CETAK ====================
 const selectedPkgId = ref('terima_beres')
+const pkgPaperSizeId = ref('A5')
+const pkgCustomW = ref(14)
+const pkgCustomH = ref(20)
 const pkgActualPages = ref(150)
 const pkgExtraCopies = ref(0)
 const pkgAddHaki = ref(false)
+const pkgHakiAuthors = ref(1)
 const pkgHakiFee = ref(500000)
+const pkgUseHardCover = ref(false)
+const pkgUseSpotUv = ref(false)
 const pkgDiscountType = ref('nominal')
 const pkgDiscountValue = ref(0)
-const pkgDiscountLabel = ref('Diskon Akademisi (Dosen/Guru/Mahasiswa)')
+const pkgDiscountLabel = ref('Potongan Khusus Anda')
 
 const selectedBookPkg = computed(() => {
   return BOOK_PACKAGES.find((p) => p.id === selectedPkgId.value) || BOOK_PACKAGES[0]
@@ -58,23 +73,73 @@ const pkgCalculation = computed(() => {
   const pkg = selectedBookPkg.value
   const totalCopies = pkg.copies + (Number(pkgExtraCopies.value) || 0)
   const qtyTier = getQuantityTier(totalCopies)
-  const pageTier = getPageTier(pkgActualPages.value, 'A5')
-  const base150Tier = PAGE_TIERS.find((t) => t.a5 === 150)
 
+  const paperCategory = resolvePaperCategory(pkgPaperSizeId.value, pkgCustomW.value, pkgCustomH.value)
+  const paperDef = PAPER_SIZES.find((p) => p.id === pkgPaperSizeId.value) || PAPER_SIZES[0]
+  const paperLabel =
+    pkgPaperSizeId.value === 'CUSTOM'
+      ? `Custom (${pkgCustomW.value} × ${pkgCustomH.value} cm)`
+      : paperDef.label
+
+  const pageTier = getPageTier(pkgActualPages.value, paperCategory)
+  const base150Tier = PAGE_TIERS.find((t) => (paperCategory === 'A4' ? t.a4 === 75 : t.a5 === 150)) || PAGE_TIERS[2]
+
+  const isNusantaraOrTerimaBeres = pkg.id === 'nusantara_new' || pkg.id === 'terima_beres'
   let extraPageCostPerBook = 0
-  if (pkgActualPages.value > 150) {
+  let totalExtraPageCost = 0
+  const extraPages = Math.max(0, pkgActualPages.value - 150)
+
+  if (isNusantaraOrTerimaBeres) {
+    // Revisi KBM: Kelebihan halaman A5/Unesco @ 285/hal, B5/A4 @ 450/hal
+    // Opsi B: Lebih hal x Tarif x 5 eks
+    const ratePerPage = paperCategory === 'A4' ? 450 : 285
+    extraPageCostPerBook = extraPages * ratePerPage
+    totalExtraPageCost = extraPages * ratePerPage * pkg.copies
+  } else if (pkgActualPages.value > 150) {
     const currentTierUnit = pageTier.prices[qtyTier.colIndex] + pageTier.extraCostPerBook
     const base150Unit = base150Tier.prices[qtyTier.colIndex]
     extraPageCostPerBook = Math.max(0, currentTierUnit - base150Unit)
+    totalExtraPageCost = extraPageCostPerBook * pkg.copies
   }
-  const totalExtraPageCost = extraPageCostPerBook * pkg.copies
 
-  const unitPriceExtraCopy = pageTier.prices[qtyTier.colIndex] + pageTier.extraCostPerBook
+  // Unit price for extra copies
+  let unitPriceExtraCopy = 0
+  if (isNusantaraOrTerimaBeres) {
+    const ratePerPage = paperCategory === 'A4' ? 450 : 285
+    const base150Unit = base150Tier.prices[qtyTier.colIndex]
+    unitPriceExtraCopy = base150Unit + extraPages * ratePerPage
+  } else {
+    unitPriceExtraCopy = pageTier.prices[qtyTier.colIndex] + pageTier.extraCostPerBook
+  }
   const extraCopiesCount = Math.max(0, Number(pkgExtraCopies.value) || 0)
   const totalExtraCopiesCost = extraCopiesCount * unitPriceExtraCopy
 
-  const hakiCost = !pkg.includesHaki && pkgAddHaki.value ? Number(pkgHakiFee.value) || 0 : 0
-  const subtotal = pkg.price + totalExtraPageCost + totalExtraCopiesCost + hakiCost
+  // HAKI calculation (+Rp 25.000 per nama tambahan jika > 1 orang)
+  let baseHakiCost = 0
+  let extraAuthorsHakiCost = 0
+  const authorsCount = Math.max(1, Number(pkgHakiAuthors.value) || 1)
+  const extraAuthors = Math.max(0, authorsCount - 1)
+
+  if (pkg.includesHaki) {
+    extraAuthorsHakiCost = extraAuthors * EXTRA_HAKI_PERSON_FEE
+  } else if (pkgAddHaki.value) {
+    baseHakiCost = Number(pkgHakiFee.value) || 500000
+    extraAuthorsHakiCost = extraAuthors * EXTRA_HAKI_PERSON_FEE
+  }
+  const hakiCost = baseHakiCost + extraAuthorsHakiCost
+
+  // Hard Cover & Spot UV
+  const hardCoverRate = getHardCoverRate(totalCopies)
+  const hardCoverCost = pkgUseHardCover.value ? totalCopies * hardCoverRate : 0
+  const spotUvCost = pkgUseSpotUv.value ? SPOT_UV_FEE : 0
+
+  const subtotal =
+    pkg.price +
+    totalExtraPageCost +
+    totalExtraCopiesCost +
+    hakiCost +
+    hardCoverCost +
+    spotUvCost
 
   let discountAmount = 0
   const rawDisc = Math.max(0, Number(pkgDiscountValue.value) || 0)
@@ -86,19 +151,38 @@ const pkgCalculation = computed(() => {
 
   const grandTotal = Math.max(0, subtotal - discountAmount)
   const originalBase = pkg.originalPrice || pkg.price
-  const totalBeforeDiscount = originalBase + totalExtraPageCost + totalExtraCopiesCost + hakiCost
+  const totalBeforeDiscount =
+    originalBase +
+    totalExtraPageCost +
+    totalExtraCopiesCost +
+    hakiCost +
+    hardCoverCost +
+    spotUvCost
   const totalSaved = Math.max(0, totalBeforeDiscount - grandTotal)
 
   return {
     pkg,
+    paperSizeId: pkgPaperSizeId.value,
+    paperLabel,
+    paperCategory,
     actualPages: pkgActualPages.value,
+    extraPages,
     pageTierLabel: pageTier.label,
     extraPageCostPerBook,
     totalExtraPageCost,
     extraCopiesCount,
     unitPriceExtraCopy,
     totalExtraCopiesCost,
+    authorsCount,
+    extraAuthors,
+    baseHakiCost,
+    extraAuthorsHakiCost,
     hakiCost,
+    useHardCover: pkgUseHardCover.value,
+    hardCoverRate,
+    hardCoverCost,
+    useSpotUv: pkgUseSpotUv.value,
+    spotUvCost,
     subtotal,
     discountAmount,
     grandTotal,
@@ -108,28 +192,31 @@ const pkgCalculation = computed(() => {
 })
 
 // ==================== 2. STATE CETAK / TERBIT KUSTOM (TABEL) ====================
-const customPaperSize = ref('A5')
+const customPaperSizeId = ref('A5')
+const customPaperW = ref(14)
+const customPaperH = ref(20)
 const customPages = ref(150)
 const customQty = ref(50)
 const customAddHaki = ref(false)
+const customHakiAuthors = ref(1)
 const customHakiFee = ref(500000)
+const customUseHardCover = ref(false)
+const customUseSpotUv = ref(false)
 const customDiscountType = ref('nominal')
 const customDiscountValue = ref(0)
-
-function setPaperSize(size) {
-  if (customPaperSize.value === size) return
-  if (size === 'A4') {
-    customPages.value = Math.max(30, Math.round(customPages.value / 2))
-  } else {
-    customPages.value = Math.max(60, customPages.value * 2)
-  }
-  customPaperSize.value = size
-}
 
 const customCalculation = computed(() => {
   const safeQty = Math.max(5, Number(customQty.value) || 5)
   const qtyTier = getQuantityTier(safeQty)
-  const pageTier = getPageTier(customPages.value, customPaperSize.value)
+
+  const paperCategory = resolvePaperCategory(customPaperSizeId.value, customPaperW.value, customPaperH.value)
+  const paperDef = PAPER_SIZES.find((p) => p.id === customPaperSizeId.value) || PAPER_SIZES[0]
+  const paperLabel =
+    customPaperSizeId.value === 'CUSTOM'
+      ? `Custom (${customPaperW.value} × ${customPaperH.value} cm)`
+      : paperDef.label
+
+  const pageTier = getPageTier(customPages.value, paperCategory)
 
   const unitPrice = pageTier.prices[qtyTier.colIndex] + pageTier.extraCostPerBook
   const baseTierUnitPrice = pageTier.prices[0] + pageTier.extraCostPerBook
@@ -138,8 +225,23 @@ const customCalculation = computed(() => {
   const normalPrintTotal = baseTierUnitPrice * safeQty
   const tierSavings = Math.max(0, normalPrintTotal - printTotal)
 
-  const hakiCost = customAddHaki.value ? Number(customHakiFee.value) || 0 : 0
-  const subtotal = printTotal + hakiCost
+  // HAKI calculation
+  let baseHakiCost = 0
+  let extraAuthorsHakiCost = 0
+  const authorsCount = Math.max(1, Number(customHakiAuthors.value) || 1)
+  const extraAuthors = Math.max(0, authorsCount - 1)
+  if (customAddHaki.value) {
+    baseHakiCost = Number(customHakiFee.value) || 500000
+    extraAuthorsHakiCost = extraAuthors * EXTRA_HAKI_PERSON_FEE
+  }
+  const hakiCost = baseHakiCost + extraAuthorsHakiCost
+
+  // Hard Cover & Spot UV
+  const hardCoverRate = getHardCoverRate(safeQty)
+  const hardCoverCost = customUseHardCover.value ? safeQty * hardCoverRate : 0
+  const spotUvCost = customUseSpotUv.value ? SPOT_UV_FEE : 0
+
+  const subtotal = printTotal + hakiCost + hardCoverCost + spotUvCost
 
   let discountAmount = 0
   const rawDisc = Math.max(0, Number(customDiscountValue.value) || 0)
@@ -195,7 +297,9 @@ const customCalculation = computed(() => {
   }
 
   return {
-    paperSize: customPaperSize.value,
+    paperSizeId: customPaperSizeId.value,
+    paperLabel,
+    paperCategory,
     pages: customPages.value,
     qty: safeQty,
     qtyTier,
@@ -205,7 +309,14 @@ const customCalculation = computed(() => {
     printTotal,
     normalPrintTotal,
     tierSavings,
+    authorsCount,
+    extraAuthors,
     hakiCost,
+    useHardCover: customUseHardCover.value,
+    hardCoverRate,
+    hardCoverCost,
+    useSpotUv: customUseSpotUv.value,
+    spotUvCost,
     subtotal,
     discountAmount,
     grandTotal,
@@ -284,25 +395,34 @@ const konversiCalculation = computed(() => {
 })
 
 // ==================== 4. STATE PAKET E-BOOK ====================
-const selectedEbookId = ref('ebook_non_sastra')
+const selectedEbookId = ref('ebook_resmi')
 const ebookPages = ref(200)
-const ebookExtraPageFeePer50 = ref(50000)
 const ebookAddHaki = ref(false)
+const ebookHakiAuthors = ref(1)
 const ebookHakiFee = ref(500000)
 const ebookDiscountType = ref('nominal')
 const ebookDiscountValue = ref(0)
 
 const selectedEbookPkg = computed(() => {
-  return EBOOK_PACKAGES.find((p) => p.id === selectedEbookId.value) || EBOOK_PACKAGES[0]
+  return EBOOK_PACKAGES[0]
 })
 
 const ebookCalculation = computed(() => {
   const pkg = selectedEbookPkg.value
   const pages = Math.max(1, Number(ebookPages.value) || 200)
   const extraPages = Math.max(0, pages - pkg.maxPages)
-  const extraBlocks = extraPages > 0 ? Math.ceil(extraPages / 50) : 0
-  const extraPagesCost = extraBlocks * (Number(ebookExtraPageFeePer50.value) || 0)
-  const hakiCost = ebookAddHaki.value ? Number(ebookHakiFee.value) || 0 : 0
+  // Revisi KBM: Kelebihan halaman e-book dikenakan tarif Rp 750 / halaman layout
+  const extraPagesCost = extraPages * EBOOK_EXTRA_PAGE_RATE
+
+  let baseHakiCost = 0
+  let extraAuthorsHakiCost = 0
+  const authorsCount = Math.max(1, Number(ebookHakiAuthors.value) || 1)
+  const extraAuthors = Math.max(0, authorsCount - 1)
+  if (ebookAddHaki.value) {
+    baseHakiCost = Number(ebookHakiFee.value) || 500000
+    extraAuthorsHakiCost = extraAuthors * EXTRA_HAKI_PERSON_FEE
+  }
+  const hakiCost = baseHakiCost + extraAuthorsHakiCost
 
   const subtotal = pkg.price + extraPagesCost + hakiCost
 
@@ -321,6 +441,8 @@ const ebookCalculation = computed(() => {
     pages,
     extraPages,
     extraPagesCost,
+    authorsCount,
+    extraAuthors,
     hakiCost,
     subtotal,
     discountAmount,
@@ -352,14 +474,39 @@ function getActiveItemSummary() {
     const c = pkgCalculation.value
     return {
       type: 'Paket Penerbitan Buku',
-      title: `${c.pkg.name} (${c.totalCopiesReceived} Eks, ${c.actualPages} Hal A5)`,
+      title: `${c.pkg.name} (${c.totalCopiesReceived} Eks, ${c.actualPages} Hal - ${c.paperLabel})`,
       grandTotal: c.grandTotal,
       details: [
         `Harga Paket Dasar (${c.pkg.copies} Eks${c.pkg.bonusCopies ? ` + Bonus ${c.pkg.bonusCopies} Eks` : ''}): ${formatRupiah(c.pkg.price)}`,
-        ...(c.totalExtraPageCost > 0 ? [`Penyesuaian ${c.actualPages} Hal (${c.pageTierLabel}): +${formatRupiah(c.totalExtraPageCost)}`] : []),
-        ...(c.extraCopiesCount > 0 ? [`Tambahan Cetak ${c.extraCopiesCount} Eks (@ ${formatRupiah(c.unitPriceExtraCopy)}): +${formatRupiah(c.totalExtraCopiesCost)}`] : []),
-        ...(c.hakiCost > 0 ? [`Pengajuan Sertifikat HAKI Kemenkumham: +${formatRupiah(c.hakiCost)}`] : []),
-        ...(c.discountAmount > 0 ? [`${pkgDiscountLabel.value}: -${formatRupiah(c.discountAmount)}`] : [])
+        `Spesifikasi Ukuran Kertas: ${c.paperLabel}`,
+        ...(c.totalExtraPageCost > 0
+          ? [
+              c.pkg.id === 'nusantara_new' || c.pkg.id === 'terima_beres'
+                ? `Penyesuaian ${c.extraPages} Hal Tambahan (@ ${formatRupiah(c.paperCategory === 'A4' ? 450 : 285)} × 5 eks): +${formatRupiah(c.totalExtraPageCost)}`
+                : `Penyesuaian ${c.actualPages} Hal (${c.pageTierLabel}): +${formatRupiah(c.totalExtraPageCost)}`
+            ]
+          : []),
+        ...(c.extraCopiesCount > 0
+          ? [`Tambahan Cetak ${c.extraCopiesCount} Eks (@ ${formatRupiah(c.unitPriceExtraCopy)}): +${formatRupiah(c.totalExtraCopiesCost)}`]
+          : []),
+        ...(c.pkg.includesHaki
+          ? [
+              c.extraAuthors > 0
+                ? `Sertifikat HAKI Kemenkumham (${c.authorsCount} Nama Pencipta, +${c.extraAuthors} Nama @ Rp 25.000): +${formatRupiah(c.extraAuthorsHakiCost)}`
+                : 'Sertifikat HAKI Kemenkumham: Termasuk (1 Nama Pencipta)'
+            ]
+          : c.hakiCost > 0
+          ? [
+              c.extraAuthors > 0
+                ? `Pengajuan Sertifikat HAKI (${c.authorsCount} Nama, +${c.extraAuthors} Nama @ Rp 25.000): +${formatRupiah(c.hakiCost)}`
+                : `Pengajuan Sertifikat HAKI Kemenkumham: +${formatRupiah(c.hakiCost)}`
+            ]
+          : []),
+        ...(c.useHardCover
+          ? [`Upgrade Sampul Hard Cover (${c.totalCopiesReceived} Eks @ ${formatRupiah(c.hardCoverRate)}): +${formatRupiah(c.hardCoverCost)}`]
+          : []),
+        ...(c.useSpotUv ? [`Finishing Spot UV Eksklusif: +${formatRupiah(c.spotUvCost)}`] : []),
+        ...(c.discountAmount > 0 ? [`Potongan Khusus Anda: -${formatRupiah(c.discountAmount)}`] : [])
       ],
       facilities: c.pkg.facilities
     }
@@ -369,14 +516,25 @@ function getActiveItemSummary() {
     const c = customCalculation.value
     return {
       type: 'Terbit & Cetak Buku Kustom',
-      title: `Cetak ${c.qty} Eksemplar (${c.pages} Hal ${c.paperSize})`,
+      title: `Cetak ${c.qty} Eksemplar (${c.pages} Hal - ${c.paperLabel})`,
       grandTotal: c.grandTotal,
       details: [
-        `Kategori Tier: ${c.qtyTier.label} (${c.pageTier.label})`,
-        `Harga Satuan: ${formatRupiah(c.unitPrice)} / eks`,
+        `Spesifikasi Ukuran: ${c.paperLabel}`,
+        `Kategori Oplah: ${c.qtyTier.label} (${c.pageTier.label})`,
+        `Harga Satuan Cetak: ${formatRupiah(c.unitPrice)} / eks`,
         `Subtotal Cetak (${c.qty} Eks): ${formatRupiah(c.printTotal)}`,
-        ...(c.hakiCost > 0 ? [`Sertifikat HAKI Kemenkumham: +${formatRupiah(c.hakiCost)}`] : []),
-        ...(c.discountAmount > 0 ? [`Potongan Diskon Khusus: -${formatRupiah(c.discountAmount)}`] : [])
+        ...(c.hakiCost > 0
+          ? [
+              c.extraAuthors > 0
+                ? `Sertifikat HAKI (${c.authorsCount} Nama, +${c.extraAuthors} Nama @ Rp 25.000): +${formatRupiah(c.hakiCost)}`
+                : `Sertifikat HAKI Kemenkumham: +${formatRupiah(c.hakiCost)}`
+            ]
+          : []),
+        ...(c.useHardCover
+          ? [`Upgrade Sampul Hard Cover (${c.qty} Eks @ ${formatRupiah(c.hardCoverRate)}): +${formatRupiah(c.hardCoverCost)}`]
+          : []),
+        ...(c.useSpotUv ? [`Finishing Spot UV: +${formatRupiah(c.spotUvCost)}`] : []),
+        ...(c.discountAmount > 0 ? [`Potongan Khusus Anda: -${formatRupiah(c.discountAmount)}`] : [])
       ],
       facilities: c.bonuses
     }
@@ -394,7 +552,7 @@ function getActiveItemSummary() {
         ...(c.extraPageCost > 0 ? [`Penyesuaian ${c.actualPages} Halaman: +${formatRupiah(c.extraPageCost)}`] : []),
         ...(c.extraCopiesCost > 0 ? [`Tambahan Cetak +${c.extraCopies} Eks (@ ${formatRupiah(c.unitPriceExtraCopy)}): +${formatRupiah(c.extraCopiesCost)}`] : []),
         ...(c.customAddon > 0 ? [`${konversiCustomAddonName.value}: +${formatRupiah(c.customAddon)}`] : []),
-        ...(c.discountAmount > 0 ? [`Potongan Diskon Khusus: -${formatRupiah(c.discountAmount)}`] : [])
+        ...(c.discountAmount > 0 ? [`Potongan Khusus Anda: -${formatRupiah(c.discountAmount)}`] : [])
       ],
       facilities: CONVERSION_FACILITIES
     }
@@ -406,10 +564,16 @@ function getActiveItemSummary() {
     title: `${c.pkg.name} (${c.pages} Hal A5/Unesco)`,
     grandTotal: c.grandTotal,
     details: [
-      `Harga Dasar ${c.pkg.name} (Maks. 200 Hal): ${formatRupiah(c.pkg.price)}`,
-      ...(c.extraPagesCost > 0 ? [`Tambahan +${c.extraPages} Halaman: +${formatRupiah(c.extraPagesCost)}`] : []),
-      ...(c.hakiCost > 0 ? [`Pengajuan HAKI Kemenkumham: +${formatRupiah(c.hakiCost)}`] : []),
-      ...(c.discountAmount > 0 ? [`Potongan Diskon Khusus: -${formatRupiah(c.discountAmount)}`] : [])
+      `Harga Paket E-Book (Maks. 200 Hal): ${formatRupiah(c.pkg.price)}`,
+      ...(c.extraPagesCost > 0 ? [`Layout Tambahan +${c.extraPages} Hal (@ ${formatRupiah(EBOOK_EXTRA_PAGE_RATE)}): +${formatRupiah(c.extraPagesCost)}`] : []),
+      ...(c.hakiCost > 0
+        ? [
+            c.extraAuthors > 0
+              ? `Pengajuan HAKI (${c.authorsCount} Nama, +${c.extraAuthors} Nama @ Rp 25.000): +${formatRupiah(c.hakiCost)}`
+              : `Pengajuan HAKI Kemenkumham: +${formatRupiah(c.hakiCost)}`
+          ]
+        : []),
+      ...(c.discountAmount > 0 ? [`Potongan Khusus Anda: -${formatRupiah(c.discountAmount)}`] : [])
     ],
     facilities: EBOOK_FACILITIES
   }
@@ -435,9 +599,11 @@ const waMessageStyle = ref('lengkap')
 
 const generatedWhatsAppText = computed(() => {
   const lines = []
-  const greetName = customerName.value.trim() ? `Bapak/Ibu *${customerName.value.trim()}*` : 'Bapak/Ibu Penulis'
+  const salutation = customerSalutation.value || 'Bapak'
+  const namePart = customerName.value.trim() ? `*${customerName.value.trim()}*` : 'Penulis'
+  const greetGreeting = `Halo ${salutation} ${namePart}, 🙏`
 
-  lines.push(`Halo ${greetName}, 🙏`)
+  lines.push(greetGreeting)
   lines.push(`Berikut kami sampaikan rincian estimasi biaya penerbitan buku di *Penerbit KBM Indonesia*:`)
   if (bookTitle.value.trim()) {
     lines.push(`📖 *Judul Naskah:* ${bookTitle.value.trim()}`)
@@ -498,66 +664,89 @@ async function copyWhatsAppText() {
     if (navigator.clipboard) {
       await navigator.clipboard.writeText(text)
       showToastMessage('✅ Teks rincian harga berhasil disalin!')
+    } else {
+      showToastMessage('Teks penawaran siap!')
     }
   }
 }
 
-function normalizePhone(phone) {
-  let cleaned = (phone || '').replace(/[^0-9]/g, '')
-  if (cleaned.startsWith('0')) {
-    cleaned = '62' + cleaned.slice(1)
-  }
-  return cleaned
-}
-
-function sendDirectWhatsApp() {
-  const text = encodeURIComponent(generatedWhatsAppText.value)
-  const phone = normalizePhone(customerPhone.value)
-  const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`
-  window.open(url, '_blank')
-}
-
 async function shareViaNativeSheet() {
   const text = generatedWhatsAppText.value
-  try {
-    await Share.share({
-      title: 'Estimasi Harga Penerbit KBM Indonesia',
-      text,
-      dialogTitle: 'Bagikan Kalkulasi Harga ke WhatsApp'
-    })
-  } catch {
-    sendDirectWhatsApp()
+  const targetPhone = customerPhone.value.replace(/\D/g, '')
+
+  if (targetPhone) {
+    let cleanPhone = targetPhone
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '62' + cleanPhone.slice(1)
+    }
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`
+    window.open(waUrl, '_blank')
+    return
   }
+
+  try {
+    const canShare = await Share.canShare()
+    if (canShare && canShare.value) {
+      await Share.share({
+        title: 'Estimasi Biaya Terbit KBM Indonesia',
+        text: text,
+        dialogTitle: 'Kirim Penawaran ke WhatsApp'
+      })
+      return
+    }
+  } catch {
+    // fallback to generic wa.me
+  }
+
+  const genericUrl = `https://wa.me/?text=${encodeURIComponent(text)}`
+  window.open(genericUrl, '_blank')
 }
 
 export function usePricingStore() {
   return {
     activeTab,
     showCustomerForm,
+    customerSalutation,
     customerName,
     customerPhone,
     bookTitle,
     marketingName,
     customNotes,
+
+    // Paket Buku
     selectedPkgId,
+    pkgPaperSizeId,
+    pkgCustomW,
+    pkgCustomH,
     pkgActualPages,
     pkgExtraCopies,
     pkgAddHaki,
+    pkgHakiAuthors,
     pkgHakiFee,
+    pkgUseHardCover,
+    pkgUseSpotUv,
     pkgDiscountType,
     pkgDiscountValue,
     pkgDiscountLabel,
     selectedBookPkg,
     pkgCalculation,
-    customPaperSize,
+
+    // Kustom Tabel
+    customPaperSizeId,
+    customPaperW,
+    customPaperH,
     customPages,
     customQty,
     customAddHaki,
+    customHakiAuthors,
     customHakiFee,
+    customUseHardCover,
+    customUseSpotUv,
     customDiscountType,
     customDiscountValue,
-    setPaperSize,
     customCalculation,
+
+    // Konversi
     selectedKonversiId,
     konversiExtraWordsBlocks,
     konversiExtraCopies,
@@ -568,27 +757,34 @@ export function usePricingStore() {
     konversiDiscountValue,
     selectedKonversiPkg,
     konversiCalculation,
+
+    // Ebook
     selectedEbookId,
     ebookPages,
-    ebookExtraPageFeePer50,
     ebookAddHaki,
+    ebookHakiAuthors,
     ebookHakiFee,
     ebookDiscountType,
     ebookDiscountValue,
     selectedEbookPkg,
     ebookCalculation,
+
+    // Komparasi & Modal
     savedQuotes,
     showCartModal,
     activeFlyerModal,
     toastMessage,
+    showToastMessage,
     openFlyerModal,
+    getActiveItemSummary,
     currentActiveTotal,
     addCurrentToComparison,
     removeSavedQuote,
+
+    // WhatsApp
     waMessageStyle,
     generatedWhatsAppText,
     copyWhatsAppText,
-    sendDirectWhatsApp,
     shareViaNativeSheet
   }
 }

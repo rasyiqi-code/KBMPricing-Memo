@@ -4,6 +4,7 @@ import { usePricingStore } from '../composables/usePricingStore.js'
 
 const {
   showCustomerForm,
+  customerSalutation,
   customerName,
   customerPhone,
   bookTitle,
@@ -33,6 +34,28 @@ const {
       style="margin-block-start: 12px"
       @submit.prevent
     >
+      <div class="field-group">
+        <label class="field-label">Sapaan Penulis</label>
+        <div class="segmented">
+          <button
+            type="button"
+            class="segment-btn"
+            :class="{ active: customerSalutation === 'Bapak' }"
+            @click="customerSalutation = 'Bapak'"
+          >
+            👨 Bapak
+          </button>
+          <button
+            type="button"
+            class="segment-btn"
+            :class="{ active: customerSalutation === 'Ibu' }"
+            @click="customerSalutation = 'Ibu'"
+          >
+            👩 Ibu
+          </button>
+        </div>
+      </div>
+
       <div class="field-group">
         <label for="cust-name" class="field-label">Nama Calon Penulis / Instansi</label>
         <input
