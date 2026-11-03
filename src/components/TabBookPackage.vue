@@ -140,7 +140,7 @@ const formattedDiscount = computed({
             :class="{ active: pkgPaperSizeId === paper.id }"
             @click="pkgPaperSizeId = paper.id"
           >
-            {{ paper.name }}
+            {{ paper.label }}
           </button>
         </div>
 

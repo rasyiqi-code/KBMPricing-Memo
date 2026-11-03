@@ -540,12 +540,53 @@ svg {
   gap: 6px;
   margin-inline: -16px;
   padding-inline: 16px;
-  padding-block: 2px;
+  padding-block: 4px 6px;
+  cursor: grab;
+  user-select: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
 .chip-row::-webkit-scrollbar {
   display: none;
+}
+
+.chip-row.is-dragging {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+.chip-row.is-dragging * {
+  cursor: grabbing !important;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip-row,
+  .card-filter-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(185, 28, 28, 0.28) transparent;
+  }
+  .chip-row::-webkit-scrollbar,
+  .card-filter-scroll::-webkit-scrollbar {
+    display: block;
+    height: 5px;
+  }
+  .chip-row::-webkit-scrollbar-track,
+  .card-filter-scroll::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 999px;
+  }
+  .chip-row::-webkit-scrollbar-thumb,
+  .card-filter-scroll::-webkit-scrollbar-thumb {
+    background: rgba(185, 28, 28, 0.28);
+    border-radius: 999px;
+  }
+  .chip-row::-webkit-scrollbar-thumb:hover,
+  .card-filter-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--kbm-red);
+  }
 }
 
 .chip-btn {
@@ -563,6 +604,8 @@ svg {
   align-items: safe center;
   gap: 4px;
   transition: all 0.12s ease;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .chip-btn.active {
@@ -784,22 +827,42 @@ svg {
 .wa-preview-box {
   background: #e5ddd5;
   margin-inline: -16px;
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-block-start: 1px solid #d1c7bd;
+  max-block-size: 560px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+}
+
+.wa-preview-box::-webkit-scrollbar {
+  inline-size: 6px;
+}
+
+.wa-preview-box::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.wa-preview-box::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 999px;
+}
+
+.wa-preview-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.38);
 }
 
 .wa-bubble {
   background: #dcf8c6;
   color: #111b21;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 10px 10px 2px 10px;
-  font-size: 0.76rem;
-  line-height: 1.45;
+  font-size: 0.78rem;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  max-block-size: 220px;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 /* ==================== FULL-EDGE FIXED BOTTOM DOCK ==================== */
@@ -1296,20 +1359,50 @@ table.pricing-table tbody tr:nth-child(even) td {
   /* Tablet Sticky Sidebar */
   .content-tablet-sidebar {
     display: block;
+    align-self: stretch;
+    height: 100%;
   }
 
   .tablet-inspector-panel {
     position: sticky;
-    inset-block-start: 78px;
+    top: 76px;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    padding-inline-end: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(185, 28, 28, 0.28) transparent;
+  }
+
+  .tablet-inspector-panel::-webkit-scrollbar {
+    inline-size: 5px;
+  }
+
+  .tablet-inspector-panel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .tablet-inspector-panel::-webkit-scrollbar-thumb {
+    background: rgba(185, 28, 28, 0.22);
+    border-radius: 999px;
+  }
+
+  .tablet-inspector-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--kbm-red);
   }
 
   .tablet-card-box {
     border-radius: var(--radius-md);
     border: 1px solid var(--border-hairline);
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  }
+
+  .tablet-card-box .wa-preview-box {
+    max-block-size: 600px;
+    border-radius: var(--radius-sm);
+    border-block-start: none;
   }
 
   .tablet-action-row {

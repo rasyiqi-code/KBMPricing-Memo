@@ -94,11 +94,11 @@ export const TABLE_NOTES = [
 
 // ==================== DEFINITIVE PAPER SIZES ====================
 export const PAPER_SIZES = [
-  { id: 'A5', label: 'A5 (14,8 × 21 cm)', shortLabel: 'A5', category: 'A5', maxWidth: 15.0, maxHeight: 21.5 },
-  { id: 'UNESCO', label: 'Unesco (15,5 × 23 cm)', shortLabel: 'Unesco', category: 'A5', maxWidth: 15.5, maxHeight: 23.0 },
-  { id: 'B5', label: 'B5 (17,5 × 25 cm)', shortLabel: 'B5', category: 'A4', maxWidth: 18.0, maxHeight: 25.5 },
-  { id: 'A4', label: 'A4 (21 × 29,7 cm)', shortLabel: 'A4', category: 'A4', maxWidth: 21.5, maxHeight: 30.0 },
-  { id: 'CUSTOM', label: 'Ukuran Custom', shortLabel: 'Custom', category: 'custom', maxWidth: 99, maxHeight: 99 }
+  { id: 'A5', name: 'A5 (14,8 × 21 cm)', label: 'A5 (14,8 × 21 cm)', shortLabel: 'A5', category: 'A5', maxWidth: 15.0, maxHeight: 21.5 },
+  { id: 'UNESCO', name: 'Unesco (15,5 × 23 cm)', label: 'Unesco (15,5 × 23 cm)', shortLabel: 'Unesco', category: 'A5', maxWidth: 15.5, maxHeight: 23.0 },
+  { id: 'B5', name: 'B5 (17,5 × 25 cm)', label: 'B5 (17,5 × 25 cm)', shortLabel: 'B5', category: 'A4', maxWidth: 18.0, maxHeight: 25.5 },
+  { id: 'A4', name: 'A4 (21 × 29,7 cm)', label: 'A4 (21 × 29,7 cm)', shortLabel: 'A4', category: 'A4', maxWidth: 21.5, maxHeight: 30.0 },
+  { id: 'CUSTOM', name: 'Ukuran Custom', label: 'Ukuran Custom', shortLabel: 'Custom', category: 'custom', maxWidth: 99, maxHeight: 99 }
 ]
 
 // ==================== FINISHING & ADD-ON RATES ====================
