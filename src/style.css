@@ -1299,11 +1299,20 @@ table.pricing-table tbody tr:nth-child(even) td {
 
 @media (min-width: 768px) {
   .app-shell {
-    max-inline-size: 1140px;
+    max-inline-size: 100%;
+    inline-size: 100%;
+    margin-inline: 0;
+    border-inline: none;
+    box-shadow: none;
+    padding-block-end: 24px;
+    background-color: var(--bg-divider);
+  }
+
+  /* Full Header Spanning Desktop Width */
+  .header-top {
+    max-inline-size: 1680px;
     margin-inline: auto;
-    border-inline: 1px solid var(--border-hairline);
-    box-shadow: 0 4px 32px rgba(15, 23, 42, 0.08);
-    padding-block-end: 24px; /* Hide mobile dock bottom padding */
+    padding-inline: 8px;
   }
 
   /* Top Navigation in Header */
@@ -1320,9 +1329,9 @@ table.pricing-table tbody tr:nth-child(even) td {
     border: none;
     background: transparent;
     color: rgba(255, 255, 255, 0.88);
-    padding: 7px 12px;
+    padding: 7px 14px;
     border-radius: var(--radius-xs);
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -1338,24 +1347,36 @@ table.pricing-table tbody tr:nth-child(even) td {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   }
 
-  /* Tablet 2-Column Split Layout */
+  /* True Desktop Layout (Fluid up to 1680px) */
   .main-content {
-    padding: 18px 20px;
-    gap: 18px;
+    max-inline-size: 1680px;
+    margin-inline: auto;
+    padding: 20px 24px;
+    inline-size: 100%;
+    gap: 24px;
   }
 
   .main-content.is-tablet-split {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.88fr);
-    gap: 20px;
+    grid-template-columns: minmax(0, 1.25fr) minmax(380px, 440px);
+    gap: 24px;
     align-items: start;
   }
 
   .content-primary-col {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     min-inline-size: 0;
+  }
+
+  /* Chip rows on desktop wrap naturally across generous desktop width */
+  .chip-row {
+    margin-inline: 0;
+    padding-inline: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-block: 2px;
   }
 
   /* Tablet Sidebar */
@@ -1450,8 +1471,8 @@ table.pricing-table tbody tr:nth-child(even) td {
 
 @media (min-width: 1024px) {
   .main-content.is-tablet-split {
-    grid-template-columns: minmax(0, 1.25fr) minmax(380px, 0.95fr);
-    gap: 24px;
+    grid-template-columns: minmax(0, 1.3fr) 440px;
+    gap: 28px;
   }
 
   /* 4-Column Balanced Grid on Wide Desktop Screens */
@@ -1485,6 +1506,20 @@ table.pricing-table tbody tr:nth-child(even) td {
   .chip-btn {
     min-block-size: 34px;
     font-size: 0.76rem;
+  }
+}
+
+@media (min-width: 1366px) {
+  .main-content.is-tablet-split {
+    grid-template-columns: minmax(0, 1.38fr) 460px;
+    gap: 32px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .main-content.is-tablet-split {
+    grid-template-columns: minmax(0, 1.45fr) 480px;
+    gap: 36px;
   }
 }
 
