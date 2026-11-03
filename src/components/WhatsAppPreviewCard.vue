@@ -54,15 +54,14 @@ const {
 
       <div class="field-group">
         <label for="wa-custom-notes" class="field-label">Catatan Tambahan di Pesan WA</label>
-        <input
+        <textarea
           id="wa-custom-notes"
           v-model="customNotes"
           name="custom_notes"
-          type="text"
-          enterkeyhint="done"
-          class="input-control"
-          placeholder="Contoh: Promo khusus bulan ini gratis pembatas buku"
-        />
+          rows="3"
+          class="input-control textarea-control"
+          placeholder="Tulis catatan tambahan... Tekan Enter untuk membuat alinea baru (misal: promo, bonus khusus, atau rincian pengiriman)"
+        ></textarea>
       </div>
     </div>
 

@@ -29,7 +29,6 @@ export function setupDragScroll() {
       hasMoved = false
       startX = e.pageX - container.getBoundingClientRect().left
       scrollLeft = container.scrollLeft
-      container.classList.add('is-dragging')
     },
     { passive: false }
   )
@@ -43,7 +42,10 @@ export function setupDragScroll() {
 
       // Hanya anggap drag jika gerakan lebih dari 4px
       if (Math.abs(walk) > 4) {
-        hasMoved = true
+        if (!hasMoved) {
+          hasMoved = true
+          activeEl.classList.add('is-dragging')
+        }
         activeEl.scrollLeft = scrollLeft - walk
       }
     },

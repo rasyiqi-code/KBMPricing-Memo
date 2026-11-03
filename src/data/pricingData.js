@@ -614,3 +614,22 @@ export function parseNumberFromDots(val) {
   const clean = String(val).replace(/\D/g, '')
   return Number(clean) || 0
 }
+
+export function formatDiscountEquivalent(discountType, discountValue, discountAmount, subtotal) {
+  const val = Number(discountValue) || 0
+  const sub = Number(subtotal) || 0
+  if (val <= 0 || sub <= 0) return ''
+
+  if (discountType === 'nominal') {
+    const amount = Number(discountAmount || val)
+    const pct = (amount / sub) * 100
+    if (pct <= 0) return ''
+    if (pct < 0.1) return '≈ <0,1%'
+    const formatted = (pct % 1 === 0 ? pct.toFixed(0) : pct.toFixed(1)).replace('.', ',')
+    return `Setara ${formatted}%`
+  } else {
+    const amount = Number(discountAmount) || 0
+    if (amount <= 0) return ''
+    return `Setara ${formatRupiah(amount)}`
+  }
+}

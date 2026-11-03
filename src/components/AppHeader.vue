@@ -45,7 +45,7 @@ const { activeTab, savedQuotes, showCartModal } = usePricingStore()
           @click="activeTab = 'custom'"
         >
           <Calculator :size="16" />
-          <span>Cetak Tabel</span>
+          <span>Cetak Kustom</span>
         </button>
         <button
           type="button"

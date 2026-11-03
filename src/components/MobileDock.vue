@@ -5,7 +5,8 @@ import {
   Calculator,
   GraduationCap,
   TabletSmartphone,
-  Images
+  Images,
+  ChevronUp
 } from 'lucide-vue-next'
 import { formatRupiah } from '../data/pricingData.js'
 import { usePricingStore } from '../composables/usePricingStore.js'
@@ -13,6 +14,7 @@ import { usePricingStore } from '../composables/usePricingStore.js'
 const {
   activeTab,
   currentActiveTotal,
+  showMobileDrawer,
   copyWhatsAppText,
   shareViaNativeSheet
 } = usePricingStore()
@@ -21,11 +23,37 @@ const {
 <template>
   <aside class="mobile-dock" aria-label="Bilah Navigasi & Aksi Mobile">
     <!-- CTA bar: Estimasi biaya & Bagikan WA (disembunyikan di tab Referensi agar tabel leluasa) -->
-    <div v-if="activeTab !== 'referensi'" class="dock-cta-bar">
-      <div class="bottom-price-info">
-        <span class="bottom-price-label">Estimasi Total</span>
-        <span class="bottom-price-val">{{ formatRupiah(currentActiveTotal) }}</span>
-      </div>
+    <div v-if="activeTab !== 'referensi'" class="dock-cta-wrapper">
+      <!-- 1. DRAWER PULL TAB / HANDLE STRIP -->
+      <button
+        type="button"
+        class="dock-drawer-tab"
+        aria-label="Buka rincian estimasi dan preview WhatsApp"
+        @click="showMobileDrawer = true"
+      >
+        <span class="dock-handle-bar"></span>
+        <span class="dock-handle-text">
+          <span>Buka Rincian & WA</span>
+          <ChevronUp :size="12" class="handle-bounce-icon" />
+        </span>
+      </button>
+
+      <!-- 2. CTA ACTION ROW -->
+      <div class="dock-cta-bar">
+        <button
+          type="button"
+          class="bottom-price-info btn-price-drawer-trigger"
+          @click="showMobileDrawer = true"
+          aria-label="Buka rincian invoice dan pesan WhatsApp"
+        >
+          <span class="bottom-price-label">Estimasi Total</span>
+          <div class="bottom-price-val-row">
+            <span class="bottom-price-val">{{ formatRupiah(currentActiveTotal) }}</span>
+            <span class="drawer-chevron-chip">
+              <ChevronUp :size="13" />
+            </span>
+          </div>
+        </button>
 
       <div class="action-btns">
         <button type="button" class="btn btn-secondary" @click="copyWhatsAppText">
@@ -48,6 +76,7 @@ const {
         </button>
       </div>
     </div>
+  </div>
 
     <!-- Native Bottom Navigation Bar -->
     <nav class="nav-tabs" aria-label="Navigasi Utama Aplikasi">
@@ -71,7 +100,7 @@ const {
         <span class="nav-tab-icon">
           <Calculator :size="18" />
         </span>
-        <span>Tabel</span>
+        <span>Kustom</span>
       </button>
       <button
         type="button"

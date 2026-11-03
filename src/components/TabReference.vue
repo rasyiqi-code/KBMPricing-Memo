@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { Table2, LayoutGrid, Images, ZoomIn, BookOpen, Layers } from 'lucide-vue-next'
+import { Table2, LayoutGrid, Images, ZoomIn, BookOpen, Layers, Sparkles } from 'lucide-vue-next'
 import {
   PAGE_TIERS,
   QUANTITY_TIERS,
@@ -125,14 +125,20 @@ const filteredPageTiers = computed(() => {
     </div>
 
     <!-- Catatan & Ketentuan Brosur -->
-    <div class="facility-grid" style="margin-block-start: 14px">
-      <div
-        v-for="(note, idx) in TABLE_NOTES"
-        :key="idx"
-        class="facility-item"
-      >
-        <span class="facility-check">&bull;</span>
-        <span>{{ note }}</span>
+    <div class="table-notes-box">
+      <div class="table-notes-header">
+        <Sparkles :size="16" class="table-notes-icon" />
+        <span class="table-notes-title">Ketentuan & Keuntungan Spesial Cetak:</span>
+      </div>
+      <div class="table-notes-list">
+        <div
+          v-for="(note, idx) in TABLE_NOTES"
+          :key="idx"
+          class="table-note-item"
+        >
+          <span class="note-bullet">•</span>
+          <span class="note-text">{{ note }}</span>
+        </div>
       </div>
     </div>
   </section>

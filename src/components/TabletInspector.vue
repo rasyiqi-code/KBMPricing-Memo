@@ -1,10 +1,12 @@
 <script setup>
-import { MessageSquare, Layers, Copy } from 'lucide-vue-next'
+import { ref } from 'vue'
+import { MessageSquare, Layers, Copy, CheckCircle2, ChevronUp, ChevronDown } from 'lucide-vue-next'
 import { formatRupiah } from '../data/pricingData.js'
 import { usePricingStore } from '../composables/usePricingStore.js'
 import SummaryInvoice from './SummaryInvoice.vue'
 
 const {
+  activeFacilities,
   customNotes,
   savedQuotes,
   waMessageStyle,
@@ -14,12 +16,45 @@ const {
   copyWhatsAppText,
   shareViaNativeSheet
 } = usePricingStore()
+
+const showFacilities = ref(false)
 </script>
 
 <template>
   <aside class="tablet-inspector-panel">
     <!-- 1. LIVE SUMMARY INVOICE -->
     <SummaryInvoice />
+
+    <!-- 1b. FASILITAS & BONUS ACCORDION (Jika ada) -->
+    <div
+      v-if="activeFacilities.length > 0"
+      class="edge-section tablet-card-box"
+      style="padding: 10px 14px; margin-block-end: 12px"
+    >
+      <div
+        class="section-header interactive"
+        @click="showFacilities = !showFacilities"
+      >
+        <h3 class="section-title" style="font-size: 0.88rem">
+          <CheckCircle2 :size="16" style="color: var(--wa-green)" />
+          <span>{{ activeFacilities.length }} Fasilitas & Bonus Paket</span>
+        </h3>
+        <span class="badge-pill badge-neutral" style="display: inline-flex; align-items: center; gap: 4px">
+          <span>{{ showFacilities ? 'Tutup' : 'Lihat' }}</span>
+          <component :is="showFacilities ? ChevronUp : ChevronDown" :size="13" />
+        </span>
+      </div>
+      <div v-if="showFacilities" class="facility-grid" style="margin-block-start: 10px">
+        <div
+          v-for="(fac, i) in activeFacilities"
+          :key="i"
+          class="facility-item"
+        >
+          <span class="facility-check">✓</span>
+          <span>{{ fac }}</span>
+        </div>
+      </div>
+    </div>
 
     <!-- 2. LIVE WHATSAPP PREVIEW CARD -->
     <div class="edge-section tablet-card-box">
@@ -69,15 +104,14 @@ const {
 
         <div class="field-group">
           <label for="tablet-wa-notes" class="field-label">Catatan Tambahan di Pesan WA</label>
-          <input
+          <textarea
             id="tablet-wa-notes"
             v-model="customNotes"
             name="tablet_custom_notes"
-            type="text"
-            enterkeyhint="done"
-            class="input-control"
-            placeholder="Contoh: Promo khusus bulan ini"
-          />
+            rows="3"
+            class="input-control textarea-control"
+            placeholder="Tulis catatan tambahan... Tekan Enter untuk membuat alinea baru (misal: promo, bonus khusus)"
+          ></textarea>
         </div>
       </div>
 

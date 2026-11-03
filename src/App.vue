@@ -1,4 +1,6 @@
 <script setup>
+import { ChevronUp } from 'lucide-vue-next'
+import { formatRupiah } from './data/pricingData.js'
 import { usePricingStore } from './composables/usePricingStore.js'
 import AppHeader from './components/AppHeader.vue'
 import CustomerInfoCard from './components/CustomerInfoCard.vue'
@@ -7,12 +9,12 @@ import TabCustomPrint from './components/TabCustomPrint.vue'
 import TabConversion from './components/TabConversion.vue'
 import TabEbook from './components/TabEbook.vue'
 import TabReference from './components/TabReference.vue'
-import WhatsAppPreviewCard from './components/WhatsAppPreviewCard.vue'
 import TabletInspector from './components/TabletInspector.vue'
 import MobileDock from './components/MobileDock.vue'
+import MobileDrawer from './components/MobileDrawer.vue'
 import ModalsOverlay from './components/ModalsOverlay.vue'
 
-const { activeTab } = usePricingStore()
+const { activeTab, currentActiveTotal, showMobileDrawer } = usePricingStore()
 </script>
 
 <template>
@@ -30,8 +32,21 @@ const { activeTab } = usePricingStore()
         <TabEbook v-else-if="activeTab === 'ebook'" />
         <TabReference v-else-if="activeTab === 'referensi'" />
 
-        <!-- Mobile-only inline WA preview card -->
-        <WhatsAppPreviewCard v-if="activeTab !== 'referensi'" />
+        <!-- Mobile Drawer Trigger Banner (at end of form on mobile) -->
+        <div
+          v-if="activeTab !== 'referensi'"
+          class="mobile-drawer-trigger-banner"
+          @click="showMobileDrawer = true"
+        >
+          <div class="trigger-banner-text">
+            <span class="trigger-banner-label">Estimasi Total Siap Dilihat</span>
+            <strong class="trigger-banner-price">{{ formatRupiah(currentActiveTotal) }}</strong>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm">
+            <span>Rincian & Pesan WA</span>
+            <ChevronUp :size="14" />
+          </button>
+        </div>
       </div>
 
       <!-- Right Column (Sticky Tablet Inspector: Invoice & WA Preview) -->
@@ -42,6 +57,9 @@ const { activeTab } = usePricingStore()
 
     <!-- NATIVE FULL-EDGE FIXED BOTTOM DOCK (Mobile Bottom Nav & Quick Actions) -->
     <MobileDock />
+
+    <!-- MOBILE BOTTOM DRAWER -->
+    <MobileDrawer />
 
     <ModalsOverlay />
   </div>

@@ -19,7 +19,7 @@ const {
       <div class="summary-header">
         <span class="badge-pill badge-gold">{{ pkgCalculation.pkg.name }}</span>
         <span class="summary-meta">
-          Ukuran: <strong>{{ pkgCalculation.paperLabel }}</strong> • Diterima: <strong>{{ pkgCalculation.totalCopiesReceived }} Eks</strong>
+          {{ pkgCalculation.paperLabel }} • {{ pkgCalculation.totalCopiesReceived }} Eks
         </span>
       </div>
 

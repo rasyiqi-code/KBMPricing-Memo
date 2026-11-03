@@ -47,7 +47,15 @@ const selectedPkgId = ref('terima_beres')
 const pkgPaperSizeId = ref('A5')
 const pkgCustomW = ref(14)
 const pkgCustomH = ref(20)
-const pkgActualPages = ref(150)
+const pkgExtraPages = ref(0)
+const pkgActualPages = computed({
+  get() {
+    return 150 + (Math.max(0, Number(pkgExtraPages.value) || 0))
+  },
+  set(val) {
+    pkgExtraPages.value = Math.max(0, (Number(val) || 150) - 150)
+  }
+})
 const pkgExtraCopies = ref(0)
 const pkgAddHaki = ref(false)
 const pkgHakiAuthors = ref(1)
@@ -580,6 +588,8 @@ function getActiveItemSummary() {
 }
 
 const currentActiveTotal = computed(() => getActiveItemSummary().grandTotal)
+const activeFacilities = computed(() => getActiveItemSummary()?.facilities || [])
+const showMobileDrawer = ref(false)
 
 function addCurrentToComparison() {
   const item = getActiveItemSummary()
@@ -718,6 +728,7 @@ export function usePricingStore() {
     pkgPaperSizeId,
     pkgCustomW,
     pkgCustomH,
+    pkgExtraPages,
     pkgActualPages,
     pkgExtraCopies,
     pkgAddHaki,
@@ -773,6 +784,8 @@ export function usePricingStore() {
     savedQuotes,
     showCartModal,
     activeFlyerModal,
+    showMobileDrawer,
+    activeFacilities,
     toastMessage,
     showToastMessage,
     openFlyerModal,
