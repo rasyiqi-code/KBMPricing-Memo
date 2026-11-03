@@ -28,10 +28,15 @@ const {
           <MessageSquare :size="16" style="color: var(--wa-green)" />
           <span>Preview Pesan WA</span>
         </h2>
-        <button type="button" class="btn-micro accent" @click="addCurrentToComparison">
-          <Layers :size="13" />
-          <span>+ Komparasi ({{ savedQuotes.length }})</span>
-        </button>
+        <div style="display: flex; align-items: center; gap: 6px">
+          <span class="badge-pill badge-gold" style="font-size: 0.76rem; font-weight: 800">
+            {{ formatRupiah(currentActiveTotal) }}
+          </span>
+          <button type="button" class="btn-micro accent" @click="addCurrentToComparison">
+            <Layers :size="13" />
+            <span>+ Komparasi ({{ savedQuotes.length }})</span>
+          </button>
+        </div>
       </div>
 
       <div class="form-stack" style="margin-block-end: 12px">

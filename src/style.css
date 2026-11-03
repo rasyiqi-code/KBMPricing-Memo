@@ -1356,7 +1356,7 @@ table.pricing-table tbody tr:nth-child(even) td {
     min-inline-size: 0;
   }
 
-  /* Tablet Sticky Sidebar */
+  /* Tablet Sidebar */
   .content-tablet-sidebar {
     display: block;
     align-self: stretch;
@@ -1364,39 +1364,21 @@ table.pricing-table tbody tr:nth-child(even) td {
   }
 
   .tablet-inspector-panel {
-    position: sticky;
-    top: 76px;
     display: flex;
     flex-direction: column;
     gap: 14px;
-    max-height: calc(100vh - 90px);
-    overflow-y: auto;
-    padding-inline-end: 2px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(185, 28, 28, 0.28) transparent;
+    height: 100%;
+    overflow: visible; /* Tidak ada scrollbar di sidebar */
   }
 
-  .tablet-inspector-panel::-webkit-scrollbar {
-    inline-size: 5px;
-  }
-
-  .tablet-inspector-panel::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .tablet-inspector-panel::-webkit-scrollbar-thumb {
-    background: rgba(185, 28, 28, 0.22);
-    border-radius: 999px;
-  }
-
-  .tablet-inspector-panel::-webkit-scrollbar-thumb:hover {
-    background: var(--kbm-red);
-  }
-
+  /* Khusus Card Preview WA dibuat sticky */
   .tablet-card-box {
+    position: sticky;
+    top: 76px;
+    z-index: 10;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-hairline);
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
   }
 
   .tablet-card-box .wa-preview-box {
