@@ -43,7 +43,7 @@ const {
             :class="{ active: customerSalutation === 'Bapak' }"
             @click="customerSalutation = 'Bapak'"
           >
-            👨 Bapak
+            Bapak
           </button>
           <button
             type="button"
@@ -51,7 +51,7 @@ const {
             :class="{ active: customerSalutation === 'Ibu' }"
             @click="customerSalutation = 'Ibu'"
           >
-            👩 Ibu
+            Ibu
           </button>
         </div>
       </div>

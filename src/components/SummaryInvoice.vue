@@ -77,7 +77,7 @@ const {
         <div>
           <div class="summary-total-label">Estimasi Total Biaya</div>
           <div v-if="pkgCalculation.totalSaved > 0" class="summary-saved-tag">
-            🎉 Hemat {{ formatRupiah(pkgCalculation.totalSaved) }}
+            Hemat {{ formatRupiah(pkgCalculation.totalSaved) }}
           </div>
         </div>
         <div class="total-price-big">{{ formatRupiah(pkgCalculation.grandTotal) }}</div>
@@ -139,7 +139,7 @@ const {
         <div>
           <div class="summary-total-label">Estimasi Total Biaya</div>
           <div v-if="customCalculation.totalSavings > 0" class="summary-saved-tag">
-            🎉 Hemat {{ formatRupiah(customCalculation.totalSavings) }}
+            Hemat {{ formatRupiah(customCalculation.totalSavings) }}
           </div>
         </div>
         <div class="total-price-big">{{ formatRupiah(customCalculation.grandTotal) }}</div>
@@ -192,7 +192,7 @@ const {
         <div>
           <div class="summary-total-label">Total Biaya Konversi</div>
           <div class="summary-saved-tag">
-            🎉 Hemat {{ formatRupiah(konversiCalculation.promoSavings) }}
+            Hemat {{ formatRupiah(konversiCalculation.promoSavings) }}
           </div>
         </div>
         <div class="total-price-big">{{ formatRupiah(konversiCalculation.grandTotal) }}</div>
