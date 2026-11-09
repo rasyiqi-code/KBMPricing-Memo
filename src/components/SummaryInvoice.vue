@@ -37,7 +37,7 @@ const {
 
       <div v-if="pkgCalculation.totalExtraPageCost > 0" class="summary-row">
         <span class="summary-row-label">
-          Penyesuaian {{ pkgCalculation.actualPages }} Hal (Lebih {{ pkgCalculation.extraPages }} Hal)
+          Penyesuaian {{ pkgCalculation.extraPages }} Hal Tambahan
         </span>
         <span class="summary-row-val">+{{ formatRupiah(pkgCalculation.totalExtraPageCost) }}</span>
       </div>

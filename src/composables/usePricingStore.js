@@ -110,15 +110,8 @@ const pkgCalculation = computed(() => {
     totalExtraPageCost = extraPageCostPerBook * pkg.copies
   }
 
-  // Unit price for extra copies
-  let unitPriceExtraCopy = 0
-  if (isNusantaraOrTerimaBeres) {
-    const ratePerPage = paperCategory === 'A4' ? 450 : 285
-    const base150Unit = base150Tier.prices[qtyTier.colIndex]
-    unitPriceExtraCopy = base150Unit + extraPages * ratePerPage
-  } else {
-    unitPriceExtraCopy = pageTier.prices[qtyTier.colIndex] + pageTier.extraCostPerBook
-  }
+  // Unit price for extra copies (sesuai tabel daftar harga terbit buku)
+  const unitPriceExtraCopy = pageTier.prices[qtyTier.colIndex] + pageTier.extraCostPerBook
   const extraCopiesCount = Math.max(0, Number(pkgExtraCopies.value) || 0)
   const totalExtraCopiesCost = extraCopiesCount * unitPriceExtraCopy
 
@@ -488,11 +481,7 @@ function getActiveItemSummary() {
         `Harga Paket Dasar (${c.pkg.copies} Eks${c.pkg.bonusCopies ? ` + Bonus ${c.pkg.bonusCopies} Eks` : ''}): ${formatRupiah(c.pkg.price)}`,
         `Spesifikasi Ukuran Kertas: ${c.paperLabel}`,
         ...(c.totalExtraPageCost > 0
-          ? [
-              c.pkg.id === 'nusantara_new' || c.pkg.id === 'terima_beres'
-                ? `Penyesuaian ${c.extraPages} Hal Tambahan (@ ${formatRupiah(c.paperCategory === 'A4' ? 450 : 285)} × 5 eks): +${formatRupiah(c.totalExtraPageCost)}`
-                : `Penyesuaian ${c.actualPages} Hal (${c.pageTierLabel}): +${formatRupiah(c.totalExtraPageCost)}`
-            ]
+          ? [`Penyesuaian ${c.extraPages} Hal Tambahan: +${formatRupiah(c.totalExtraPageCost)}`]
           : []),
         ...(c.extraCopiesCount > 0
           ? [`Tambahan Cetak ${c.extraCopiesCount} Eks (@ ${formatRupiah(c.unitPriceExtraCopy)}): +${formatRupiah(c.totalExtraCopiesCost)}`]
