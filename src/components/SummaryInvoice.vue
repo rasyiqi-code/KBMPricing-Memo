@@ -44,7 +44,7 @@ const {
 
       <div v-if="pkgCalculation.extraCopiesCount > 0" class="summary-row">
         <span class="summary-row-label">
-          Tambah {{ pkgCalculation.extraCopiesCount }} Eks (@ {{ formatRupiah(pkgCalculation.unitPriceExtraCopy) }})
+          Tambah {{ pkgCalculation.extraCopiesCount }} Eks
         </span>
         <span class="summary-row-val">+{{ formatRupiah(pkgCalculation.totalExtraCopiesCost) }}</span>
       </div>

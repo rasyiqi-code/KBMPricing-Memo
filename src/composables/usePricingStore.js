@@ -478,13 +478,13 @@ function getActiveItemSummary() {
       title: `${c.pkg.name} (${c.totalCopiesReceived} Eks, ${c.actualPages} Hal - ${c.paperLabel})`,
       grandTotal: c.grandTotal,
       details: [
-        `Harga Paket Dasar (${c.pkg.copies} Eks${c.pkg.bonusCopies ? ` + Bonus ${c.pkg.bonusCopies} Eks` : ''}): ${formatRupiah(c.pkg.price)}`,
-        `Spesifikasi Ukuran Kertas: ${c.paperLabel}`,
+        `Harga (${c.pkg.copies} Eks${c.pkg.bonusCopies ? ` + Bonus ${c.pkg.bonusCopies} Eks` : ''}): ${formatRupiah(c.pkg.price)}`,
+        `Ukuran Kertas: ${c.paperLabel}`,
         ...(c.totalExtraPageCost > 0
           ? [`Penyesuaian ${c.extraPages} Hal Tambahan: +${formatRupiah(c.totalExtraPageCost)}`]
           : []),
         ...(c.extraCopiesCount > 0
-          ? [`Tambahan Cetak ${c.extraCopiesCount} Eks (@ ${formatRupiah(c.unitPriceExtraCopy)}): +${formatRupiah(c.totalExtraCopiesCost)}`]
+          ? [`Tambahan Cetak ${c.extraCopiesCount} Eks: +${formatRupiah(c.totalExtraCopiesCost)}`]
           : []),
         ...(c.pkg.includesHaki
           ? [
