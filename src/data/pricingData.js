@@ -575,7 +575,8 @@ export function getQuantityTier(qty) {
 }
 
 export function getPageTier(pages, paperSize = 'A5') {
-  const numPages = Math.max(1, Number(pages) || 150)
+  const defaultBase = paperSize === 'A4' ? 75 : 150
+  const numPages = Math.max(1, Number(pages) || defaultBase)
   const key = paperSize === 'A4' ? 'a4' : 'a5'
   for (const tier of PAGE_TIERS) {
     if (numPages <= tier[key]) {

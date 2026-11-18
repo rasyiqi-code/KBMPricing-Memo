@@ -48,12 +48,16 @@ const pkgPaperSizeId = ref('A5')
 const pkgCustomW = ref(14)
 const pkgCustomH = ref(20)
 const pkgExtraPages = ref(0)
+const pkgBasePages = computed(() => {
+  const paperCat = resolvePaperCategory(pkgPaperSizeId.value, pkgCustomW.value, pkgCustomH.value)
+  return paperCat === 'A4' ? 75 : 150
+})
 const pkgActualPages = computed({
   get() {
-    return 150 + (Math.max(0, Number(pkgExtraPages.value) || 0))
+    return pkgBasePages.value + (Math.max(0, Number(pkgExtraPages.value) || 0))
   },
   set(val) {
-    pkgExtraPages.value = Math.max(0, (Number(val) || 150) - 150)
+    pkgExtraPages.value = Math.max(0, (Number(val) || pkgBasePages.value) - pkgBasePages.value)
   }
 })
 const pkgExtraCopies = ref(0)
@@ -89,24 +93,18 @@ const pkgCalculation = computed(() => {
       ? `Custom (${pkgCustomW.value} × ${pkgCustomH.value} cm)`
       : paperDef.label
 
+  const basePages = paperCategory === 'A4' ? 75 : 150
+  const extraPages = Math.max(0, pkgActualPages.value - basePages)
   const pageTier = getPageTier(pkgActualPages.value, paperCategory)
-  const base150Tier = PAGE_TIERS.find((t) => (paperCategory === 'A4' ? t.a4 === 75 : t.a5 === 150)) || PAGE_TIERS[2]
+  const baseTier = PAGE_TIERS.find((t) => (paperCategory === 'A4' ? t.a4 === 75 : t.a5 === 150)) || PAGE_TIERS[2]
 
-  const isNusantaraOrTerimaBeres = pkg.id === 'nusantara_new' || pkg.id === 'terima_beres'
   let extraPageCostPerBook = 0
   let totalExtraPageCost = 0
-  const extraPages = Math.max(0, pkgActualPages.value - 150)
 
-  if (isNusantaraOrTerimaBeres) {
-    // Revisi KBM: Kelebihan halaman A5/Unesco @ 285/hal, B5/A4 @ 450/hal
-    // Opsi B: Lebih hal x Tarif x 5 eks
-    const ratePerPage = paperCategory === 'A4' ? 450 : 285
-    extraPageCostPerBook = extraPages * ratePerPage
-    totalExtraPageCost = extraPages * ratePerPage * pkg.copies
-  } else if (pkgActualPages.value > 150) {
+  if (pkgActualPages.value > basePages) {
     const currentTierUnit = pageTier.prices[qtyTier.colIndex] + pageTier.extraCostPerBook
-    const base150Unit = base150Tier.prices[qtyTier.colIndex]
-    extraPageCostPerBook = Math.max(0, currentTierUnit - base150Unit)
+    const baseTierUnit = baseTier.prices[qtyTier.colIndex]
+    extraPageCostPerBook = Math.max(0, currentTierUnit - baseTierUnit)
     totalExtraPageCost = extraPageCostPerBook * pkg.copies
   }
 
@@ -166,6 +164,7 @@ const pkgCalculation = computed(() => {
     paperSizeId: pkgPaperSizeId.value,
     paperLabel,
     paperCategory,
+    basePages,
     actualPages: pkgActualPages.value,
     extraPages,
     pageTierLabel: pageTier.label,
@@ -718,6 +717,7 @@ export function usePricingStore() {
     pkgCustomW,
     pkgCustomH,
     pkgExtraPages,
+    pkgBasePages,
     pkgActualPages,
     pkgExtraCopies,
     pkgAddHaki,

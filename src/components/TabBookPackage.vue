@@ -33,6 +33,7 @@ const {
   pkgCustomW,
   pkgCustomH,
   pkgExtraPages,
+  pkgBasePages,
   pkgActualPages,
   pkgExtraCopies,
   pkgAddHaki,
@@ -123,7 +124,7 @@ function setDiscount(val) {
             <Shirt :size="11" style="display: inline-block; vertical-align: -1px; margin-inline-end: 2px" />
             {{ pkg.tshirtBonus }} Kaos
           </span>
-          <span class="micro-tag">≤{{ pkg.maxPages }} Hal</span>
+          <span class="micro-tag">≤{{ pkgCalculation.basePages }} Hal</span>
         </div>
       </button>
     </div>
@@ -203,11 +204,14 @@ function setDiscount(val) {
           <label for="pkg-extra-pages" class="field-label">
             <span>Tambah Halaman Naskah</span>
             <span class="field-hint">
-              <template v-if="selectedPkgId === 'nusantara_new' || selectedPkgId === 'terima_beres'">
-                @ Rp {{ pkgCalculation.paperCategory === 'A4' ? '450' : '285' }}/hal
+              <template v-if="(Number(pkgExtraPages) || 0) === 0">
+                Standar: Maks. {{ pkgCalculation.basePages }} Hal
               </template>
               <template v-else>
-                {{ pkgCalculation.pageTierLabel }}
+                Total {{ pkgCalculation.actualPages }} Hal • {{ pkgCalculation.pageTierLabel }}
+                <template v-if="pkgCalculation.extraPageCostPerBook > 0">
+                  (+{{ formatRupiah(pkgCalculation.extraPageCostPerBook) }}/eks)
+                </template>
               </template>
             </span>
           </label>
@@ -240,7 +244,7 @@ function setDiscount(val) {
           </div>
           <div class="chip-row">
             <button
-              v-for="p in [0, 5, 10, 20, 50, 100, 150]"
+              v-for="p in [0, 5, 10, 20, 25, 50, 100, 150]"
               :key="p"
               type="button"
               class="chip-btn"
